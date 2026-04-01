@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11x.ai — 360 Reverse Engineering: Деконструкция</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #000;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ─── Top Banner ─── */
+  .top-banner {
+    background: #1a1a1a;
+    color: #fff;
+    text-align: center;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .top-banner span { opacity: 0.7; }
+
+  /* ─── Navigation ─── */
+  nav {
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    padding: 0 48px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+  }
+  .nav-logo {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none;
+    color: #000;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .nav-links a:hover { opacity: 1; }
+  .nav-cta {
+    background: #000;
+    color: #fff !important;
+    padding: 8px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 1 !important;
+    transition: background 0.2s;
+  }
+  .nav-cta:hover { background: #333; }
+
+  /* ─── Hero ─── */
+  .hero {
+    padding: 120px 48px 100px;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .hero-label {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(48px, 7vw, 80px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  .hero p {
+    font-size: 18px;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto 40px;
+    opacity: 0.6;
+  }
+
+  /* ─── Buttons ─── */
+  .btn {
+    display: inline-block;
+    background: #000;
+    color: #fff;
+    padding: 14px 32px;
+    border-radius: 28px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: #333; }
+  .btn-outline {
+    background: transparent;
+    color: #000;
+    border: 1.5px solid #000;
+  }
+  .btn-outline:hover { background: #000; color: #fff; }
+
+  /* ─── Sections ─── */
+  .section {
+    padding: 100px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-warm {
+    background: #F0EBE4;
+    max-width: 100%;
+    padding: 100px 48px;
+  }
+  .section-warm .section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-dark {
+    background: #1a1a1a;
+    color: #fff;
+    max-width: 100%;
+    padding: 100px 48px;
+  }
+  .section-dark .section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    margin-bottom: 16px;
+  }
+  .section-dark .section-label { opacity: 0.5; }
+
+  .section-title {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+  }
+  .section-subtitle {
+    font-size: 17px;
+    line-height: 1.6;
+    opacity: 0.55;
+    max-width: 640px;
+    margin-bottom: 48px;
+  }
+
+  /* ─── Divider ─── */
+  .divider {
+    height: 1px;
+    background: rgba(0,0,0,0.1);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ─── Two Column Grid ─── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+  }
+
+  /* ─── Cards ─── */
+  .card {
+    padding: 40px;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(0,0,0,0.2); }
+  .card-warm {
+    background: #F0EBE4;
+    border: none;
+  }
+  .card-dark {
+    background: #242424;
+    border: none;
+    color: #fff;
+  }
+  .card h3 {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .card p {
+    font-size: 15px;
+    line-height: 1.6;
+    opacity: 0.6;
+  }
+  .card-dark p { opacity: 0.55; }
+
+  /* ─── Stat Block ─── */
+  .stat {
+    text-align: center;
+    padding: 32px 16px;
+  }
+  .stat-value {
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .stat-label {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.5;
+  }
+
+  /* ─── Tables ─── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 32px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 14px 16px;
+    border-bottom: 2px solid #000;
+    white-space: nowrap;
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .section-dark th { border-bottom-color: rgba(255,255,255,0.3); }
+  .section-dark td { border-bottom-color: rgba(255,255,255,0.08); }
+
+  /* ─── Timeline ─── */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: rgba(0,0,0,0.15);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 32px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #000;
+  }
+  .timeline-item.red::before { background: #c0392b; }
+  .timeline-date {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    margin-bottom: 4px;
+  }
+  .timeline-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .timeline-desc {
+    font-size: 14px;
+    opacity: 0.55;
+    line-height: 1.5;
+  }
+
+  /* ─── Quote ─── */
+  .quote {
+    border-left: 3px solid #000;
+    padding: 24px 32px;
+    margin: 32px 0;
+    background: rgba(0,0,0,0.02);
+    border-radius: 0 12px 12px 0;
+  }
+  .section-dark .quote {
+    border-left-color: #fff;
+    background: rgba(255,255,255,0.05);
+  }
+  .quote p {
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.5;
+    font-style: italic;
+    opacity: 0.8;
+  }
+  .quote cite {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 600;
+    opacity: 0.5;
+  }
+
+  /* ─── Tags / Badges ─── */
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 4px 4px 4px 0;
+  }
+  .badge-dark { background: #000; color: #fff; }
+  .badge-outline { border: 1.5px solid #000; color: #000; }
+  .badge-warm { background: #F0EBE4; color: #000; }
+  .badge-red { background: #c0392b; color: #fff; }
+  .badge-green { background: #1a7a3a; color: #fff; }
+
+  /* ─── Code Block ─── */
+  .code-block {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    padding: 32px;
+    border-radius: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 24px 0;
+  }
+  .code-comment { color: #6a6a6a; }
+  .code-keyword { color: #c792ea; }
+  .code-string { color: #c3e88d; }
+  .code-func { color: #82aaff; }
+
+  /* ─── Architecture Diagram ─── */
+  .arch-diagram {
+    background: #F0EBE4;
+    border-radius: 16px;
+    padding: 48px;
+    margin: 32px 0;
+    text-align: center;
+  }
+  .arch-box {
+    display: inline-block;
+    background: #000;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 6px;
+  }
+  .arch-box-outline {
+    display: inline-block;
+    background: #fff;
+    color: #000;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1.5px solid #000;
+    margin: 6px;
+  }
+  .arch-arrow {
+    display: block;
+    font-size: 24px;
+    margin: 8px 0;
+    opacity: 0.3;
+  }
+  .arch-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+  }
+
+  /* ─── Flywheel Diagram ─── */
+  .flywheel {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    margin: 40px auto;
+  }
+  .flywheel-ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid #000;
+    border-radius: 50%;
+    opacity: 0.15;
+  }
+  .flywheel-step {
+    position: absolute;
+    background: #000;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+  }
+  .flywheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 900;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* ─── Verdict ─── */
+  .verdict-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 32px 0;
+  }
+  .verdict-item {
+    background: #fff;
+    padding: 32px;
+  }
+  .verdict-item h4 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.4;
+    margin-bottom: 8px;
+  }
+  .verdict-item p {
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  /* ─── List styles ─── */
+  .clean-list {
+    list-style: none;
+    padding: 0;
+  }
+  .clean-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-size: 15px;
+    line-height: 1.5;
+    display: flex;
+    gap: 12px;
+  }
+  .clean-list li::before {
+    content: '';
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #000;
+    margin-top: 8px;
+  }
+  .section-dark .clean-list li { border-bottom-color: rgba(255,255,255,0.08); }
+  .section-dark .clean-list li::before { background: #fff; }
+
+  /* ─── Comparison Bar ─── */
+  .bar-chart {
+    margin: 32px 0;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .bar-label {
+    width: 120px;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+  }
+  .bar-track {
+    flex: 1;
+    height: 32px;
+    background: rgba(0,0,0,0.04);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    background: #000;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .bar-fill-red { background: #c0392b; }
+  .bar-fill-warm { background: #b8a898; }
+
+  /* ─── Footer ─── */
+  footer {
+    background: #000;
+    color: #fff;
+    padding: 60px 48px;
+    text-align: center;
+  }
+  footer p {
+    opacity: 0.4;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .verdict-grid { grid-template-columns: 1fr; }
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .section, .section-warm, .section-dark { padding: 60px 20px; }
+    .hero { padding: 80px 20px 60px; }
+    .flywheel { width: 300px; height: 300px; }
+    .flywheel-step { font-size: 10px; padding: 8px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ TOP BANNER ═══════════════ -->
+<div class="top-banner">
+  <span>Reverse Engineering Report</span> &nbsp;&middot;&nbsp; 11x.ai &nbsp;&middot;&nbsp; 360 Deep Dive &nbsp;&middot;&nbsp; Март 2026
+  <a href="index.html" style="color:rgba(255,255,255,0.5);text-decoration:none;margin-left:12px">EN</a> <span style="margin:0 4px;opacity:0.3">|</span> <span style="color:#fff">RU</span>
+</div>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav>
+  <div class="nav-logo">11x Research</div>
+  <ul class="nav-links">
+    <li><a href="#company">Компания</a></li>
+    <li><a href="#products">Продукты</a></li>
+    <li><a href="#tech">Технологии</a></li>
+    <li><a href="#gtm">GTM-стратегия</a></li>
+    <li><a href="#financials">Финансы</a></li>
+    <li><a href="#scandal">Скандал</a></li>
+    <li><a href="#aftermath">Последствия</a></li>
+    <li><a href="#playbook">Плейбук</a></li>
+    <li><a href="#top" class="nav-cta">Наверх</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero" id="top">
+  <div class="hero-label">360 Reverse Engineering</div>
+  <h1>11x.ai<br>Деконструкция</h1>
+  <p>Продукты, архитектура, GTM-стратегия, юнит-экономика, скандал и извлечённые уроки. Всё, что нужно понять&nbsp;&mdash; и повторить то, что работает.</p>
+  <a href="#company" class="btn">Читать отчёт</a>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ KEY NUMBERS ═══════════════ -->
+<section class="section">
+  <div class="grid-3">
+    <div class="stat">
+      <div class="stat-value">$76M</div>
+      <div class="stat-label">Привлечено (a16z, Benchmark)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$350M</div>
+      <div class="stat-label">Пиковая оценка (ноябрь 2024)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">~$3M</div>
+      <div class="stat-label">Реальная выручка (vs заявленных $10-25M)</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ COMPANY ═══════════════ -->
+<section class="section" id="company">
+  <div class="section-label">01 &mdash; Компания</div>
+  <h2 class="section-title">Digital Workers,<br>человеческие результаты</h2>
+  <p class="section-subtitle">AI-цифровые сотрудники для GTM-операций. Основана в сентябре 2022 в Лондоне, переехала в Сан-Франциско в сентябре 2024.</p>
+
+  <div class="grid-2">
+    <div>
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em">Руководство</h3>
+      <ul class="clean-list">
+        <li><strong>Hasan Sukkar</strong> &mdash; основатель. Покинул пост CEO в мае 2025, сейчас Non-Executive Chairman</li>
+        <li><strong>Prabhav Jain</strong> &mdash; текущий CEO (с мая 2025). MIT, 3x основатель, ex-Brex Head of Engineering, a16z Scout, 45+ ангельских инвестиций</li>
+        <li><strong>Команда</strong> &mdash; ~50 человек. Из 5 сооснователей остался только Sukkar. 34+ ушли за 2,5 года</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em">Позиционирование</h3>
+      <div class="quote">
+        <p>"We don't target SaaS spend; we target hiring budgets. We're in the business of selling work."</p>
+        <cite>Guillaume Roux-Romestaing, Head of Partnerships</cite>
+      </div>
+      <p style="font-size:15px;line-height:1.6;opacity:0.6;margin-top:16px">Фрейм «digital workers» переводит бюджет со строки SaaS ($49/мес инструменты) на строку найма ($60-80K/SDR). Другой ЛПР, другой процесс согласования, больше денег.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ PRODUCTS ═══════════════ -->
+<section class="section-warm" id="products">
+  <div class="section-inner">
+    <div class="section-label">02 &mdash; Продукты</div>
+    <h2 class="section-title">Знакомьтесь:<br>Digital Workers</h2>
+    <p class="section-subtitle">Два AI-сотрудника, каждый с человеческим именем, автономной работой 24/7 и чётко определённой ролью.</p>
+
+    <div class="grid-2" style="margin-top:48px">
+      <!-- Alice -->
+      <div class="card" style="background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px">
+          <h3 style="font-size:32px;font-weight:900;letter-spacing:-0.03em">Alice</h3>
+          <span class="badge badge-dark">AI SDR</span>
+        </div>
+        <p style="font-size:15px;line-height:1.6;opacity:0.6;margin-bottom:24px">Автономный outbound: исследование &rarr; персонализация &rarr; мультиканальный outreach &rarr; обработка ответов &rarr; бронирование встреч. End-to-end, без участия человека.</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px">
+          <span class="badge badge-warm">Email</span>
+          <span class="badge badge-warm">LinkedIn</span>
+          <span class="badge badge-warm">SMS</span>
+          <span class="badge badge-warm">WhatsApp</span>
+          <span class="badge badge-warm">Phone</span>
+          <span class="badge badge-warm">105+ языков</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">+30%</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">встреч на AE</div>
+          </div>
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">+80%</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">конверсия встреча&rarr;сделка</div>
+          </div>
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">&gt;90%</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">основной inbox</div>
+          </div>
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">21</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">источников данных</div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(0,0,0,0.08)">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:8px">Alice 2.0 (январь 2025)</div>
+          <p style="font-size:13px;opacity:0.55;line-height:1.5">Полная перестройка: новый репозиторий, новая инфра, новая команда. 3 месяца до продакшна. ~2M лидов найдено, ~3M сообщений отправлено, ~21K ответов. Добавлено: автономное самообучение, продвинутая RAG KB, идентификация посетителей сайта, интеллектуальная обработка ответов.</p>
+        </div>
+      </div>
+
+      <!-- Julian -->
+      <div class="card" style="background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px">
+          <h3 style="font-size:32px;font-weight:900;letter-spacing:-0.03em">Julian</h3>
+          <span class="badge badge-dark">AI Phone Rep</span>
+        </div>
+        <p style="font-size:15px;line-height:1.6;opacity:0.6;margin-bottom:24px">Квалификация входящих лидов за &lt;20 секунд. Исходящие звонки. Естественные разговоры до 30 минут. Автономно бронирует встречи.</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px">
+          <span class="badge badge-warm">200+ голосов</span>
+          <span class="badge badge-warm">&lt;100ms latency</span>
+          <span class="badge badge-warm">28+ языков</span>
+          <span class="badge badge-warm">BANT/MEDDIC</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">+61%</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">конверсия inbound</div>
+          </div>
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">+37%</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">лид&rarr;встреча</div>
+          </div>
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">&lt;20s</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">время ответа</div>
+          </div>
+          <div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">30 мин</div>
+            <div style="font-size:12px;opacity:0.5;font-weight:500">макс. разговор</div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(0,0,0,0.08)">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:8px">Стек голосовых технологий</div>
+          <p style="font-size:13px;opacity:0.55;line-height:1.5"><strong>Ultravox</strong> &mdash; мультимодальная речевая LLM, без отдельного этапа ASR, практически нулевая задержка. <strong>Cartesia</strong> &mdash; TTS на State Space Models, TTFA 40-90ms, динамическая скорость/эмоция/тон прямо в разговоре. Обучена на 100K+ реальных звонков продаж.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Roadmap -->
+    <div style="text-align:center;margin-top:48px;padding:32px;background:#fff;border-radius:16px">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:8px">Дорожная карта 2025</div>
+      <div style="font-size:20px;font-weight:800;letter-spacing:-0.02em">8-20 дополнительных digital workers</div>
+      <div style="font-size:14px;opacity:0.5;margin-top:4px">RevOps &middot; Sales Enablement &middot; Customer Success &middot; Solution Engineering &middot; Marketing</div>
+    </div>
+
+    <!-- Reality Check -->
+    <div style="margin-top:48px;padding:40px;background:#fff;border-radius:16px;border-left:4px solid #c0392b">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;margin-bottom:8px">Проверка реальностью: независимые результаты</div>
+      <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px">Стоимость одного положительного ответа</h3>
+      <p style="font-size:15px;opacity:0.6;line-height:1.6;margin-bottom:24px;max-width:640px"><strong>Что это значит:</strong> Директор по SDR провёл 4-месячный A/B-тест нескольких AI SDR платформ, измеряя стоимость одного <em>положительного ответа</em> &mdash; когда потенциальный клиент реально отвечает с интересом, а не игнорирует или отписывается. Это ключевая метрика эффективности outbound: сколько денег вы тратите на платформу, чтобы получить один настоящий, заинтересованный ответ.</p>
+
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">11x.ai</div>
+          <div class="bar-track"><div class="bar-fill bar-fill-red" style="width:100%">$2,500 / положительный ответ</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Artisan</div>
+          <div class="bar-track"><div class="bar-fill bar-fill-warm" style="width:22%">$550</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Salestools.io</div>
+          <div class="bar-track"><div class="bar-fill" style="width:1%;min-width:80px">$12.50</div></div>
+        </div>
+      </div>
+
+      <!-- Breakdown -->
+      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+        <div style="padding:20px;background:#fdf2f2;border-radius:12px">
+          <div style="font-size:13px;font-weight:700;color:#c0392b;margin-bottom:4px">11x.ai &mdash; $5,000/мес</div>
+          <p style="font-size:13px;opacity:0.7;line-height:1.5">~2 положительных ответа в месяц. Один пользователь заплатил <strong>$22,500 за 1 лид</strong> за 6 месяцев. Другой получил <strong>0 встреч</strong> за полгода.</p>
+        </div>
+        <div style="padding:20px;background:rgba(0,0,0,0.03);border-radius:12px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Artisan &mdash; $1,650/мес</div>
+          <p style="font-size:13px;opacity:0.7;line-height:1.5">~3 положительных ответа в месяц. В 4,5x дешевле, чем 11x за ответ. Быстрее настройка (дни vs 4 недели).</p>
+        </div>
+        <div style="padding:20px;background:rgba(26,122,58,0.06);border-radius:12px">
+          <div style="font-size:13px;font-weight:700;color:#1a7a3a;margin-bottom:4px">Salestools.io &mdash; низкая стоимость</div>
+          <p style="font-size:13px;opacity:0.7;line-height:1.5">В <strong>200x дешевле</strong>, чем 11x за тот же результат. Self-serve, без годовой привязки.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;padding:20px;background:rgba(0,0,0,0.03);border-radius:12px">
+        <p style="font-size:14px;line-height:1.6;opacity:0.7"><strong style="opacity:1">Почему это критично:</strong> этот разрыв в юнит-экономике &mdash; главный драйвер оттока 70-80%. Клиенты приходили, ожидая «digital worker, который заменит SDR», платили $5K/мес, видели $2,500 за ответ через 3 месяца &mdash; и уходили. Flywheel начал крутиться в обратную сторону: разочарованные клиенты создавали негативное сарафанное радио. MarketBetter подытожил: <em>&ldquo;Alice replaces maybe 40% of an SDR's job at 100% of the cost.&rdquo;</em></p>
+      </div>
+
+      <p style="font-size:12px;opacity:0.4;line-height:1.5;margin-top:16px">Источник: Medium, SDR Director &mdash; независимый 4-месячный A/B-тест платформ (2024).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ TECH STACK ═══════════════ -->
+<section class="section-dark" id="tech">
+  <div class="section-inner">
+    <div class="section-label">03 &mdash; Техническая архитектура</div>
+    <h2 class="section-title" style="color:#fff">Иерархическая<br>мульти-агентная система</h2>
+    <p class="section-subtitle" style="opacity:0.45">Пробовали ReAct (провал: путаница с инструментами, бесконечные циклы), Workflow (провал: «дорогой CLI с лишними шагами»), остановились на иерархической мульти-агентной системе через LangGraph.</p>
+
+    <!-- Architecture Diagram -->
+    <div class="arch-diagram">
+      <div class="arch-box" style="font-size:16px;padding:18px 36px">SUPERVISOR AGENT</div>
+      <div class="arch-arrow">&darr;</div>
+      <div style="font-size:11px;font-weight:600;opacity:0.4;margin-bottom:8px">AUTO-GENERATED HANDOFF TOOLS</div>
+      <div class="arch-row">
+        <div class="arch-box-outline">Researcher</div>
+        <div class="arch-box-outline">Positioning Report Gen</div>
+        <div class="arch-box-outline">LinkedIn Writer</div>
+        <div class="arch-box-outline">Email Writer</div>
+      </div>
+      <div class="arch-arrow">&darr;</div>
+      <div style="font-size:11px;font-weight:600;opacity:0.4;margin-bottom:8px">SEPARATE PIPELINE</div>
+      <div class="arch-box-outline">Audience Creation</div>
+    </div>
+
+    <!-- Tools over Skills -->
+    <div style="margin-top:64px">
+      <h3 style="font-size:32px;font-weight:900;letter-spacing:-0.03em;margin-bottom:12px;color:#fff">"Tools over Skills"</h3>
+      <p style="font-size:15px;line-height:1.6;opacity:0.45;max-width:640px;margin-bottom:32px">Ключевая философия проектирования: вместо того чтобы делать агентов «умными» через обширные промпты, дать инструменты и объяснить их использование. Калькулятор vs устный счёт.</p>
+
+      <div class="grid-2">
+        <div class="card card-dark">
+          <h3 style="color:#fff">Tools <span style="opacity:0.4;font-weight:500;font-size:14px">(детерминированные)</span></h3>
+          <ul class="clean-list">
+            <li>Поиск и обогащение лидов</li>
+            <li>Чтение/запись в CRM</li>
+            <li>Управление календарём</li>
+            <li>Отправка email</li>
+            <li>Операции с базой данных</li>
+            <li>Парсинг документов</li>
+          </ul>
+        </div>
+        <div class="card card-dark">
+          <h3 style="color:#fff">Agent Reasoning <span style="opacity:0.4;font-weight:500;font-size:14px">(креативные)</span></h3>
+          <ul class="clean-list">
+            <li>Решения по позиционированию продукта</li>
+            <li>Генерация персонализированного контента</li>
+            <li>Синтез исследований</li>
+            <li>Адаптация тона и стиля</li>
+            <li>Обработка возражений</li>
+            <li>Стратегическая приоритизация</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Why it works -->
+    <div class="quote" style="margin-top:40px">
+      <p style="color:#fff">"One MCP server can expose 90+ tools consuming 50,000+ tokens of schemas before reasoning even starts. Successful production agents use fewer than 10 tools."</p>
+      <cite style="color:rgba(255,255,255,0.4)">Lance Martin, LangChain &amp; Arcade.dev research</cite>
+    </div>
+
+    <p style="font-size:15px;line-height:1.7;opacity:0.45;margin-top:24px;max-width:700px"><strong style="opacity:1;color:#fff">Progressive disclosure:</strong> Supervisor видит только 4-5 определений handoff-инструментов. Каждый суб-агент имеет &lt;10 фокусных инструментов. Агенты обнаруживают возможности по мере необходимости, а не заранее. Удаление handoff-сообщений из контекста даёт ~50% улучшение производительности.</p>
+
+    <!-- Tech Stack Table -->
+    <div style="margin-top:64px">
+      <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px;color:#fff">Полный стек технологий</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr style="color:rgba(255,255,255,0.5)">
+              <th>Слой</th>
+              <th>Технология</th>
+              <th>Назначение</th>
+            </tr>
+          </thead>
+          <tbody style="color:rgba(255,255,255,0.7)">
+            <tr><td>Agent Framework</td><td><strong style="color:#fff">LangChain + LangGraph</strong></td><td>Оркестрация, граф-воркфлоу</td></tr>
+            <tr><td>Observability</td><td><strong style="color:#fff">LangSmith</strong></td><td>Мониторинг, дебаг, трейсинг</td></tr>
+            <tr><td>Agent Memory</td><td><strong style="color:#fff">Letta (MemGPT)</strong></td><td>Stateful-память: Core (в контексте) + Archival (поисковая)</td></tr>
+            <tr><td>Language</td><td><strong style="color:#fff">TypeScript</strong></td><td>Основная кодовая база</td></tr>
+            <tr><td>Backend</td><td><strong style="color:#fff">FastAPI + PostgreSQL</strong></td><td>API и хранение данных</td></tr>
+            <tr><td>AI Models</td><td><strong style="color:#fff">OpenAI + Anthropic</strong></td><td>Стратегия двух LLM</td></tr>
+            <tr><td>Voice ASR</td><td><strong style="color:#fff">Ultravox</strong></td><td>Мультимодальная речевая LLM, без отдельного ASR</td></tr>
+            <tr><td>Voice TTS</td><td><strong style="color:#fff">Cartesia (SSM)</strong></td><td>Синтез речи, TTFA 40-90ms</td></tr>
+            <tr><td>RAG Parsing</td><td><strong style="color:#fff">LlamaParse</strong></td><td>PDF, PPT, изображения &rarr; структурированные данные</td></tr>
+            <tr><td>Web Scraping</td><td><strong style="color:#fff">Firecrawl</strong></td><td>Извлечение контента с сайтов</td></tr>
+            <tr><td>Media</td><td><strong style="color:#fff">CloudGlue</strong></td><td>Извлечение контента из аудио/видео</td></tr>
+            <tr><td>Vector DB</td><td><strong style="color:#fff">Pinecone</strong></td><td>Хранение и поиск эмбеддингов</td></tr>
+            <tr><td>Integrations</td><td><strong style="color:#fff">Composio</strong></td><td>Сторонние инструменты (сэкономлено 380 инж. часов)</td></tr>
+            <tr><td>Compute</td><td><strong style="color:#fff">GCP</strong></td><td>Основные вычисления</td></tr>
+            <tr><td>Storage</td><td><strong style="color:#fff">AWS (AES-256)</strong></td><td>Хранение данных, шифрование at rest</td></tr>
+            <tr><td>Email Infra</td><td><strong style="color:#fff">Proprietary</strong></td><td>Прогрев почтовых ящиков, ротация, &gt;90% inbox</td></tr>
+            <tr><td>Data</td><td><strong style="color:#fff">People Data Labs + 20</strong></td><td>Фирмографические, технографические, intent-данные</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Memory Architecture -->
+    <div style="margin-top:64px">
+      <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px;color:#fff">Архитектура памяти (Letta/MemGPT)</h3>
+      <div class="grid-2">
+        <div class="card card-dark">
+          <h3 style="color:#fff;font-size:18px">Core Memory</h3>
+          <p>Блоки памяти, закреплённые в системном промпте, всегда в контексте. Рабочая память для текущего состояния задачи. Исследовательский агент записывает прогресс в эти блоки.</p>
+        </div>
+        <div class="card card-dark">
+          <h3 style="color:#fff;font-size:18px">Archival Memory</h3>
+          <p>Полная история, поиск по эмбеддингам, ничего не теряется. Всё состояние сохраняется в DB: сообщения, рассуждения, вызовы инструментов. Общие блоки памяти связывают несколько агентов.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAG Pipeline -->
+    <div style="margin-top:64px">
+      <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px;color:#fff">RAG Pipeline ("Alice's Brain")</h3>
+      <div class="arch-diagram" style="text-align:left">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <div class="arch-box-outline">LlamaParse<br><span style="font-size:11px;opacity:0.5">PDF, PPT, Images</span></div>
+          <div class="arch-box-outline">Firecrawl<br><span style="font-size:11px;opacity:0.5">Websites</span></div>
+          <div class="arch-box-outline">CloudGlue<br><span style="font-size:11px;opacity:0.5">Audio/Video</span></div>
+        </div>
+        <div style="font-size:20px;opacity:0.3;margin:12px 0">&darr;</div>
+        <div class="arch-box-outline" style="display:block;text-align:center">Waterfall Chunking &rarr; Logical Units</div>
+        <div style="font-size:20px;opacity:0.3;margin:12px 0">&darr;</div>
+        <div class="arch-box" style="display:block;text-align:center">Pinecone (Vector Storage)</div>
+        <div style="font-size:20px;opacity:0.3;margin:12px 0">&darr;</div>
+        <div class="arch-box-outline" style="display:block;text-align:center">Deep Research Agent (Letta) &rarr; Multi-step Research with Memory</div>
+        <div style="margin-top:16px;font-size:12px;opacity:0.4;text-align:center"><strong>Прототип KB &rarr; продакшн: 3 дня</strong></div>
+      </div>
+    </div>
+
+    <!-- LangGraph Code -->
+    <div style="margin-top:64px">
+      <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px;color:#fff">Имплементация Supervisor</h3>
+      <div class="code-block">
+<span class="code-keyword">from</span> langgraph_supervisor <span class="code-keyword">import</span> <span class="code-func">create_supervisor</span>
+<span class="code-keyword">from</span> langgraph.prebuilt <span class="code-keyword">import</span> <span class="code-func">create_react_agent</span>
+
+<span class="code-comment"># Each sub-agent: ReAct agent with NARROW tool set</span>
+researcher = <span class="code-func">create_react_agent</span>(
+    model=model,
+    tools=[search_leads, enrich_company, fetch_linkedin],
+    name=<span class="code-string">"researcher"</span>,
+    prompt=<span class="code-string">"You are a lead research specialist..."</span>
+)
+
+<span class="code-comment"># Supervisor auto-generates handoff tools:</span>
+<span class="code-comment"># transfer_to_researcher, transfer_to_positioning_expert, etc.</span>
+workflow = <span class="code-func">create_supervisor</span>(
+    agents=[researcher, positioning_agent, email_writer, linkedin_writer],
+    model=ChatOpenAI(model=<span class="code-string">"gpt-4o"</span>),
+    prompt=<span class="code-string">"You are the campaign creation supervisor."</span>,
+    output_mode=<span class="code-string">"full_history"</span>
+)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ ICP ═══════════════ -->
+<section class="section" id="icp">
+  <div class="section-label">04 &mdash; ICP и ценообразование</div>
+  <h2 class="section-title">Кто покупает<br>Digital Workers</h2>
+  <p class="section-subtitle">Mid-market и enterprise B2B. Перешли от SMB self-serve после обнаружения, что продвинутые отделы продаж дают лучшие результаты.</p>
+
+  <div class="grid-2">
+    <div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Параметр</th><th>Детали</th></tr></thead>
+          <tbody>
+            <tr><td>Сегмент</td><td>Mid-market &rarr; Enterprise B2B</td></tr>
+            <tr><td>Индустрии</td><td>SaaS, FinTech, Enterprise Tech</td></tr>
+            <tr><td>Размер команды</td><td>Крупный outbound с выделенным RevOps</td></tr>
+            <tr><td>Бюджет</td><td>$50K-$250K+/год</td></tr>
+            <tr><td>Покупатели</td><td>VP Sales, CRO, Director Sales Dev</td></tr>
+            <tr><td>Объём</td><td>10,000+ email для ощутимого ROI</td></tr>
+            <tr><td>Anti-ICP</td><td>Маленькие команды, стартапы, бюджет &lt;$50K</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em">Ценообразование (данные Vendr)</h3>
+      <div class="card card-warm" style="margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:24px;font-weight:900">$40,125</div>
+            <div style="font-size:12px;opacity:0.5">медианный контракт/год</div>
+          </div>
+          <div>
+            <div style="font-size:24px;font-weight:900">$45,000</div>
+            <div style="font-size:12px;opacity:0.5">Alice Advanced/год</div>
+          </div>
+          <div>
+            <div style="font-size:24px;font-weight:900">$45,000</div>
+            <div style="font-size:12px;opacity:0.5">Julian Advanced/год</div>
+          </div>
+          <div>
+            <div style="font-size:24px;font-weight:900">20%</div>
+            <div style="font-size:12px;opacity:0.5">макс. скидка (18 мес)</div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13px;opacity:0.5;line-height:1.6"><strong>Скрытые расходы:</strong> нет телефонного дайлера (+$200-500/мес), нет базы контактов, нет идентификации посетителей сайта, только базовая персонализация.</p>
+      <div class="quote" style="margin-top:16px">
+        <p style="font-size:14px">"Alice replaces maybe 40% of an SDR's job at 100% of the cost."</p>
+        <cite>MarketBetter, 2026 Review</cite>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verified Customers -->
+  <div style="margin-top:48px">
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:16px;letter-spacing:-0.02em">Реальность клиентов</h3>
+    <div class="grid-3">
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px"><span class="badge badge-green">Подтверждено</span></div>
+        <p style="font-weight:600">Pleo, Rho</p>
+        <p style="font-size:13px;opacity:0.5;margin-top:4px">Верифицированные платящие клиенты</p>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px"><span class="badge badge-outline">На сайте</span></div>
+        <p style="font-weight:600">Checkr, Xerox, Sage, Leica, Gupshup, UST</p>
+        <p style="font-size:13px;opacity:0.5;margin-top:4px">Отображаются, но не верифицированы</p>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px"><span class="badge badge-red">Опровергнуто</span></div>
+        <p style="font-weight:600">ZoomInfo, Airtable</p>
+        <p style="font-size:13px;opacity:0.5;margin-top:4px">Провалившиеся пилоты, логотипы использованы без разрешения</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ GTM STRATEGY ═══════════════ -->
+<section class="section-warm" id="gtm">
+  <div class="section-inner">
+    <div class="section-label">05 &mdash; GTM-стратегия</div>
+    <h2 class="section-title">Growth<br>Flywheel</h2>
+    <p class="section-subtitle">Alice генерирует лиды для самой 11x. Каждый потенциальный клиент получает outreach ОТ продукта &mdash; встроенная живая демонстрация. CAC стремится к нулю.</p>
+
+    <!-- Flywheel Visual -->
+    <div style="background:#fff;border-radius:16px;padding:48px;margin-bottom:48px">
+      <div class="flywheel">
+        <div class="flywheel-ring"></div>
+        <div class="flywheel-step" style="top:0;left:50%;transform:translateX(-50%)">Alice отправляет outreach</div>
+        <div class="flywheel-step" style="top:25%;right:-20px">Клиент видит продукт вживую</div>
+        <div class="flywheel-step" style="bottom:25%;right:-10px">Новый клиент = больше данных</div>
+        <div class="flywheel-step" style="bottom:0;left:50%;transform:translateX(-50%)">Точность модели растёт</div>
+        <div class="flywheel-step" style="bottom:25%;left:-30px">Лучше результаты и WoM</div>
+        <div class="flywheel-step" style="top:25%;left:-40px">Больше inbound-спроса</div>
+        <div class="flywheel-center">
+          <div style="font-size:32px;font-weight:900;letter-spacing:-0.03em">10K</div>
+          <div style="font-size:12px;opacity:0.5">запросов на демо<br>за 10 месяцев</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Where flywheel broke -->
+    <div style="background:#fff;border-radius:16px;padding:32px;border-left:4px solid #c0392b;margin-bottom:48px">
+      <h3 style="font-size:18px;font-weight:800;margin-bottom:8px">Где Flywheel сломался</h3>
+      <p style="font-size:15px;opacity:0.6;line-height:1.6">Отток 70-80% означает, что цикл «больше клиентов &rarr; лучше продукт» так и не заработал. Данные не конвертировались в качество. Галлюцинации + шаблонные сообщения порождали негативный WoM. <strong>Flywheel начал крутиться в обратную сторону.</strong></p>
+    </div>
+
+    <!-- Sales Motion -->
+    <div class="grid-2">
+      <div>
+        <h3 style="font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em">Модель продаж</h3>
+        <ul class="clean-list">
+          <li><strong>Пивот:</strong> self-serve SMB &rarr; enterprise sales-led</li>
+          <li><strong>Процесс:</strong> сначала демо &rarr; 30-дневные пилоты с совместным ROI</li>
+          <li><strong>Ценообразование:</strong> нет публичных цен, индивидуальные предложения</li>
+          <li><strong>Подход:</strong> ABM с выделенными командами продаж</li>
+          <li><strong>Контракты:</strong> годовое обязательство, break clause на 3 месяца</li>
+          <li><strong>Цикл продаж:</strong> недели (демо &rarr; контракт &rarr; 4 недели настройки)</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em">Иерархия сообщений</h3>
+        <div class="card" style="background:#fff;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4">Primary</div>
+          <h3 style="font-size:18px">Скорость pipeline без найма</h3>
+          <p style="font-size:13px">Замените SDR за $60-80K за долю стоимости</p>
+        </div>
+        <div class="card" style="background:#fff;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4">Secondary</div>
+          <h3 style="font-size:18px">Персонализация в масштабе</h3>
+          <p style="font-size:13px">Исследование и сообщения под каждый аккаунт</p>
+        </div>
+        <div class="card" style="background:#fff">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4">Tertiary</div>
+          <h3 style="font-size:18px">Digital workers, а не инструменты</h3>
+          <p style="font-size:13px">AI как член команды, а не ещё одна SaaS-подписка</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Strategy -->
+    <div style="margin-top:64px">
+      <h3 style="font-size:24px;font-weight:800;margin-bottom:24px;letter-spacing:-0.02em">Контент-стратегия сравнений</h3>
+      <div class="grid-2">
+        <div class="card" style="background:#fff">
+          <h3 style="font-size:18px">/blog <span style="opacity:0.4;font-weight:500;font-size:13px">32 posts</span></h3>
+          <p style="margin-bottom:12px">Анонсы, запуски продуктов, партнёрства, кейсы, thought leadership.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="badge badge-warm">Brand</span>
+            <span class="badge badge-warm">PR</span>
+            <span class="badge badge-warm">Announcements</span>
+          </div>
+        </div>
+        <div class="card" style="background:#fff">
+          <h3 style="font-size:18px">/tips <span style="opacity:0.4;font-weight:500;font-size:13px">50+ categories</span></h3>
+          <p style="margin-bottom:12px">Чистый программатик SEO. Mid-funnel ключевые слова. Revenue enablement, гайды по TAM, buyer journey.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="badge badge-warm">SEO</span>
+            <span class="badge badge-warm">Programmatic</span>
+            <span class="badge badge-warm">Mid-funnel</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px">
+        <h4 style="font-size:16px;font-weight:700;margin-bottom:12px">Контент-формула</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Тип</th><th>Цель</th><th>Пример</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Сравнительные посты</strong></td><td>Привлечь покупателей на стадии решения</td><td>"11x vs Competitors: Which AI Sales Agent Delivers"</td></tr>
+              <tr><td><strong>Подборки альтернатив</strong></td><td>Перехватить трафик конкурентов</td><td>"Best Artisan Alternatives 2025"</td></tr>
+              <tr><td><strong>Образовательные гайды</strong></td><td>Mid-funnel SEO + авторитет</td><td>"Enterprise Sales Prospecting Strategy"</td></tr>
+              <tr><td><strong>Thought leadership</strong></td><td>Создание категории</td><td>"Why You Must Adopt AI Sales Automation Before Q3 2026"</td></tr>
+              <tr><td><strong>Контрарные мнения</strong></td><td>Вовлечение в LinkedIn</td><td>"The 'AI replaces salespeople' narrative is also wrong"</td></tr>
+              <tr><td><strong>Мем/GIF-хак</strong></td><td>Реактивация</td><td>35% ответов на follow-up</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partnerships -->
+    <div style="margin-top:48px">
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:16px;letter-spacing:-0.02em">Экосистема партнёрств</h3>
+      <div class="grid-3">
+        <div class="card" style="background:#fff">
+          <h3 style="font-size:16px">IBM</h3>
+          <p style="font-size:13px">Интеграция с watsonx Orchestrate. Объявлено в мае 2025 &mdash; реабилитация репутации после скандала.</p>
+        </div>
+        <div class="card" style="background:#fff">
+          <h3 style="font-size:16px">Composio</h3>
+          <p style="font-size:13px">Интеграционная платформа. 4 интеграции за 1 неделю. $4.2M сделок разблокировано, 380 инж. часов сэкономлено.</p>
+        </div>
+        <div class="card" style="background:#fff">
+          <h3 style="font-size:16px">Партнёрская программа</h3>
+          <p style="font-size:13px">GTM-консультанты, реселлеры, SI. На комиссионной основе. Ко-брендированные материалы и обучение.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FINANCIALS ═══════════════ -->
+<section class="section" id="financials">
+  <div class="section-label">06 &mdash; Финансы</div>
+  <h2 class="section-title">Цифры<br>за хайпом</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Раунд</th><th>Сумма</th><th>Лид</th><th>Дата</th><th>Оценка</th></tr></thead>
+      <tbody>
+        <tr><td>Seed</td><td>$2M</td><td>&mdash;</td><td>Aug 2023</td><td>&mdash;</td></tr>
+        <tr><td>Series A</td><td>$24M</td><td>Benchmark</td><td>Sept 2024</td><td>$90M</td></tr>
+        <tr><td>Series B</td><td>$50M</td><td>Andreessen Horowitz</td><td>Nov 2024</td><td>$350M</td></tr>
+        <tr><td><strong>Итого</strong></td><td><strong>$76M</strong></td><td colspan="3"><em>4x рост оценки за 2 месяца (A &rarr; B)</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:48px">
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:16px;letter-spacing:-0.02em">Юнит-экономика</h3>
+    <div class="verdict-grid">
+      <div class="verdict-item">
+        <h4>Заявленный ARR</h4>
+        <p>~$10-25M</p>
+      </div>
+      <div class="verdict-item">
+        <h4>Фактическая выручка</h4>
+        <p style="color:#c0392b">~$2-3M</p>
+      </div>
+      <div class="verdict-item">
+        <h4>Выручка / сотрудник</h4>
+        <p>~$60K <span style="opacity:0.4;font-size:13px">(бенчмарк: $825K-1M+)</span></p>
+      </div>
+      <div class="verdict-item">
+        <h4>Валовый отток</h4>
+        <p style="color:#c0392b">70-80% в течение 3 месяцев</p>
+      </div>
+      <div class="verdict-item">
+        <h4>Оценочный LTV</h4>
+        <p>~$15K <span style="opacity:0.4;font-size:13px">(3 месяца &times; $5K)</span></p>
+      </div>
+      <div class="verdict-item">
+        <h4>LTV / CAC</h4>
+        <p style="color:#c0392b">Почти наверняка &lt;1x</p>
+      </div>
+      <div class="verdict-item">
+        <h4>Реальный мультипликатор</h4>
+        <p style="color:#c0392b">~116x к выручке <span style="opacity:0.4;font-size:13px">(инвесторы думали 35x)</span></p>
+      </div>
+      <div class="verdict-item">
+        <h4>Остаток кэша</h4>
+        <p>~$70M <span style="opacity:0.4;font-size:13px">(заявление CEO, не верифицировано)</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Investors -->
+  <div style="margin-top:48px">
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:16px;letter-spacing:-0.02em">Список инвесторов</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span class="badge badge-dark">a16z</span>
+      <span class="badge badge-dark">Benchmark</span>
+      <span class="badge badge-outline">20VC</span>
+      <span class="badge badge-outline">20Growth</span>
+      <span class="badge badge-outline">20Sales</span>
+      <span class="badge badge-outline">Quiet Capital</span>
+      <span class="badge badge-outline">SV Angel</span>
+      <span class="badge badge-outline">Abstract Ventures</span>
+      <span class="badge badge-outline">Lux Capital</span>
+      <span class="badge badge-outline">Operator Partners</span>
+      <span class="badge badge-outline">Visionaries Club</span>
+      <span class="badge badge-outline">Activant</span>
+      <span class="badge badge-outline">HubSpot Ventures</span>
+      <span class="badge badge-outline">Project A</span>
+    </div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+      <span class="badge badge-warm">Amjad Masad (Replit)</span>
+      <span class="badge badge-warm">Aaron Levie (Box)</span>
+      <span class="badge badge-warm">Suhail Doshi (Playground)</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ SCANDAL ═══════════════ -->
+<section class="section-dark" id="scandal">
+  <div class="section-inner">
+    <div class="section-label">07 &mdash; Скандал</div>
+    <h2 class="section-title" style="color:#fff">AI's Theranos<br>Moment</h2>
+    <p class="section-subtitle" style="opacity:0.4">Март 2025. Расследование TechCrunch. ~20 источников. История, которая изменила категорию AI SDR.</p>
+
+    <!-- Context explainer -->
+    <div style="margin-top:16px;padding:32px;background:rgba(255,255,255,0.05);border-radius:16px;margin-bottom:48px;max-width:800px">
+      <h3 style="font-size:18px;font-weight:800;color:#fff;margin-bottom:12px">Контекст: почему это важно</h3>
+      <p style="color:rgba(255,255,255,0.55);font-size:15px;line-height:1.7">11x.ai привлекла $76M от топовых фондов (a16z, Benchmark) за 14 месяцев, достигнув оценки в $350M. Компания позиционировала себя как лидера формирующегося рынка AI digital workers. Но в марте 2025 журналисты TechCrunch опросили ~20 источников &mdash; инвесторов, текущих и бывших сотрудников, клиентов &mdash; и вскрыли систематическую фальсификацию ключевых метрик. Inc Magazine назвал это <em>&ldquo;AI's Theranos Moment&rdquo;</em> &mdash; сравнение с самым громким стартап-скандалом десятилетия. Эта история стала поворотным моментом для всей категории AI SDR: инвесторы и покупатели начали относиться к заявлениям AI-стартапов с принципиально иным уровнем скептицизма.</p>
+    </div>
+
+    <!-- Timeline -->
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:24px;color:#fff">Хронология событий</h3>
+    <div class="timeline" style="max-width:700px">
+      <div class="timeline-item">
+        <div class="timeline-date">Лето 2024</div>
+        <div class="timeline-title" style="color:#fff">Внутренний Slack показывает 20-30% retention</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Внутренние метрики показывают, что только 20-30% клиентов остаются после пробного периода. Публично компания заявляет о здоровом росте и высоком retention. Этот разрыв между внутренней реальностью и внешним нарративом &mdash; фундамент грядущего скандала.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">Сентябрь 2024</div>
+        <div class="timeline-title" style="color:#fff">Series A: $24M при оценке $90M</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Benchmark лидирует раунд. Показатели ARR, представленные инвесторам, рассчитаны по полной годовой стоимости контрактов &mdash; без учёта того, что большинство клиентов уходят через 3 месяца по break clause.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">Ноябрь 2024</div>
+        <div class="timeline-title" style="color:#fff">Series B: $50M при оценке $350M</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">a16z лидирует. Оценка растёт в 4x за 2 месяца. Инвесторы считают, что платят мультипликатор 35x к выручке ($350M / $10M ARR). В реальности мультипликатор ~116x ($350M / $3M фактической удержанной выручки). Разрыв между заявленными и реальными метриками &mdash; суть предстоящего расследования.</div>
+      </div>
+      <div class="timeline-item red">
+        <div class="timeline-date">Январь-февраль 2025</div>
+        <div class="timeline-title" style="color:#fff">Пилот ZoomInfo провалился</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Крупнейший B2B-провайдер данных проводит одномесячный пилот. Вердикт: <em>&ldquo;performed significantly worse than our SDR employees.&rdquo;</em> Несмотря на провал, 11x продолжает размещать логотип ZoomInfo на сайте и в презентациях ещё 4 месяца. ZoomInfo направляет официальную юридическую претензию: недобросовестная торговая практика, нарушение товарного знака, ложная реклама.</div>
+      </div>
+      <div class="timeline-item red">
+        <div class="timeline-date">24 марта 2025</div>
+        <div class="timeline-title" style="color:#fff">Расследование TechCrunch</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Журналисты публикуют расследование на основе ~20 источников (инвесторы, текущие и бывшие сотрудники, клиенты). Ключевые выводы: завышенный ARR через схему с break clause, несанкционированное использование логотипов ZoomInfo и Airtable, отток 70-80%, реальная выручка ~$3M vs заявленных $10-25M. Бывший инженер: <em>&ldquo;The products barely work.&rdquo;</em></div>
+      </div>
+      <div class="timeline-item red">
+        <div class="timeline-date">25 марта 2025</div>
+        <div class="timeline-title" style="color:#fff">Sifted: расследование токсичной культуры</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">На следующий день европейское издание Sifted публикует расследование о токсичной культуре. 60+ часов в неделю как норма. Сотрудники ночевали в офисе в Сан-Франциско. Обязательная работа на Рождество 2024. Сообщение CEO в Slack (июль 2024): <em>&ldquo;We need you to work nights and weekends... if you are not willing to push hard you don't deserve to be at 11x.&rdquo;</em> Средний срок работы сейлзов: 2-3 месяца. Сотрудник: <em>&ldquo;One day, there will be a documentary about this guy.&rdquo;</em></div>
+      </div>
+      <div class="timeline-item red">
+        <div class="timeline-date">5 мая 2025</div>
+        <div class="timeline-title" style="color:#fff">CEO уходит с поста</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Через шесть недель после двух расследований Hasan Sukkar «добровольно» уходит с поста CEO на роль Non-Executive Chairman (классическая мягкая посадка для вытесненных основателей). Заявление компании: <em>&ldquo;The decision was made after deep discussions with the board.&rdquo;</em> Новый CEO &mdash; Prabhav Jain, a16z Scout и ex-Brex Head of Engineering, что указывает на смену руководства, организованную советом директоров под руководством ведущего инвестора.</div>
+      </div>
+    </div>
+
+    <!-- Break Clause Scheme -->
+    <div style="margin-top:64px;background:rgba(255,255,255,0.05);padding:40px;border-radius:16px">
+      <h3 style="font-size:24px;font-weight:800;margin-bottom:8px;color:#fff">Схема с Break Clause</h3>
+      <p style="color:rgba(255,255,255,0.4);font-size:14px;line-height:1.6;margin-bottom:24px;max-width:640px">Как 11x систематически завышала ARR для инвесторов. Не разовая ошибка &mdash; структурная схема, встроенная в бизнес-процесс.</p>
+
+      <div style="color:rgba(255,255,255,0.55);font-size:15px;line-height:2.2">
+        <p>1. 11x настаивала на <strong style="color:#fff">годовых контрактах</strong> даже для пробных клиентов &mdash; создавая видимость подтверждённой выручки</p>
+        <p>2. Контракты содержали <strong style="color:#fff">break clause на 3 месяца</strong> &mdash; клиенты могли уйти без штрафа, и большинство уходили</p>
+        <p>3. При отчётности ARR перед инвесторами считалась <strong style="color:#fff">полная годовая стоимость контракта</strong>, даже когда клиенты уже воспользовались break clause и ушли</p>
+        <p>4. Заявленный ARR: ~$10M. Реально удержанная выручка: <strong style="color:#c0392b">~$3M</strong> &mdash; разрыв в 3,3x</p>
+        <p>5. Инвесторы Series B считали, что платят <strong style="color:#fff">мультипликатор 35x к выручке</strong> ($350M/$10M). Реальный мультипликатор: <strong style="color:#c0392b">~116x</strong> ($350M/$3M)</p>
+      </div>
+
+      <div style="margin-top:24px;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px">
+        <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6"><strong style="color:rgba(255,255,255,0.7)">Почему это работало:</strong> ARR (Annual Recurring Revenue) &mdash; ключевая метрика для SaaS-инвесторов. Они используют её для расчёта мультипликаторов оценки. Если ARR = $10M и мультипликатор 35x, то оценка = $350M. Но если реальная выручка $3M, инвесторы фактически заплатили 116x &mdash; в 3+ раза больше, чем думали. Break clause превращал «годовые контракты» в де-факто 3-месячные пилоты, но на бумаге они выглядели как подтверждённая годовая выручка.</p>
+      </div>
+
+      <div class="quote" style="margin-top:24px">
+        <p style="color:rgba(255,255,255,0.8)">"They absolutely massaged the numbers internally when it came to growth and churn."</p>
+        <cite style="color:rgba(255,255,255,0.3)">Former 11x employee, TechCrunch</cite>
+      </div>
+
+      <div class="quote" style="margin-top:12px">
+        <p style="color:rgba(255,255,255,0.8)">"The products barely work."</p>
+        <cite style="color:rgba(255,255,255,0.3)">Former 11x engineer, TechCrunch</cite>
+      </div>
+    </div>
+
+    <!-- Fake Customers -->
+    <div style="margin-top:48px">
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:16px;color:#fff">Опровергнутые клиенты</h3>
+      <div class="grid-2">
+        <div style="background:rgba(255,255,255,0.05);padding:32px;border-radius:16px">
+          <h4 style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px">ZoomInfo</h4>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6">1-месячный пилот (январь-февраль 2025). Продукт показал результаты хуже внутренних SDR. Логотип размещался 4 месяца без разрешения. Официальная юридическая претензия: недобросовестная торговая практика, нарушение товарного знака, ложная реклама.</p>
+          <div class="quote" style="margin-top:12px">
+            <p style="font-size:14px;color:rgba(255,255,255,0.7)">"We did not give them permission to use our logo in any manner, and we are not a customer."</p>
+            <cite style="color:rgba(255,255,255,0.3)">ZoomInfo to TechCrunch</cite>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);padding:32px;border-radius:16px">
+          <h4 style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px">Airtable</h4>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6">Никогда не были клиентом. Провели «очень короткий» провальный пилот в конце 2024. Логотип появился на сайте 11x и странице манифеста без разрешения.</p>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
+            <h4 style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:8px">Цитаты о качестве продукта</h4>
+            <p style="color:rgba(255,255,255,0.5);font-size:13px;line-height:1.6;font-style:italic">"The products barely work." &mdash; Former engineer</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:13px;line-height:1.6;font-style:italic;margin-top:4px">"$22,500 for 1 lead over six months." &mdash; Customer</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post-scandal -->
+    <div style="margin-top:48px">
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:16px;color:#fff">Последствия</h3>
+      <ul class="clean-list">
+        <li>a16z, Benchmark, Project A: публично подтвердили поддержку</li>
+        <li>Новый CEO Prabhav Jain: a16z Scout, вероятно смена руководства организована советом</li>
+        <li>Партнёрство с IBM объявлено в мае 2025: реабилитация репутации</li>
+        <li>~$70M остаток кэша (заявление CEO, не верифицировано)</li>
+        <li>AiSDR агрессивно перехватывал уходящих клиентов</li>
+        <li>Скептицизм по всей категории: «The day of reckoning is coming for AI SDRs»</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ COMPETITORS ═══════════════ -->
+<section class="section" id="competitors">
+  <div class="section-label">08 &mdash; Конкурентный ландшафт</div>
+  <h2 class="section-title">Рынок<br>AI SDR</h2>
+
+  <!-- Market Size -->
+  <div class="grid-3" style="margin-bottom:48px">
+    <div class="stat">
+      <div class="stat-value">$4.3B</div>
+      <div class="stat-label">Размер рынка 2025</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$24B</div>
+      <div class="stat-label">Прогноз 2034</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">21-32%</div>
+      <div class="stat-label">Диапазон CAGR</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>11x.ai</th>
+          <th>Artisan (Ava)</th>
+          <th>AiSDR</th>
+          <th>Apollo.io</th>
+          <th>Salestools.io</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Настройка</strong></td><td>4 недели</td><td>Дни</td><td>Дни</td><td>Self-serve</td><td>Self-serve</td></tr>
+        <tr><td><strong>Голосовой AI</strong></td><td><span class="badge badge-green" style="font-size:11px">Julian</span></td><td>&mdash;</td><td>&mdash;</td><td>Ограниченно</td><td>&mdash;</td></tr>
+        <tr><td><strong>Данные</strong></td><td>21 источник</td><td>300M+ контактов</td><td>Ограниченно</td><td>Огромная DB</td><td>&mdash;</td></tr>
+        <tr><td><strong>Цена/мес</strong></td><td>~$5,000</td><td>~$1,500</td><td>~$750</td><td>Free &rarr; $99+</td><td>Ниже</td></tr>
+        <tr><td><strong>Стоимость/ответ</strong></td><td style="color:#c0392b"><strong>$2,500</strong></td><td>$550</td><td>Лучше</td><td>&mdash;</td><td style="color:#1a7a3a"><strong>$12.50</strong></td></tr>
+        <tr><td><strong>Автономность</strong></td><td>End-to-end</td><td>Полуавтомат</td><td>Полуавтомат</td><td>Ручной + AI</td><td>Полуавтомат</td></tr>
+        <tr><td><strong>Комплаенс</strong></td><td>SOC2, GDPR, CASA</td><td>Ограниченно</td><td>Ограниченно</td><td>SOC 2</td><td>&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pricing Tiers -->
+  <div style="margin-top:48px">
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:16px;letter-spacing:-0.02em">Ценовые сегменты категории</h3>
+    <div class="grid-3">
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:8px">Начальный</div>
+        <div style="font-size:28px;font-weight:900">$49-150</div>
+        <div style="font-size:13px;opacity:0.5">/мес</div>
+        <p style="font-size:13px;opacity:0.5;margin-top:8px">Luna.ai, Reply.io, Salesforge</p>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:8px">Mid-Market</div>
+        <div style="font-size:28px;font-weight:900">$500-900</div>
+        <div style="font-size:13px;opacity:0.5">/мес</div>
+        <p style="font-size:13px;opacity:0.5;margin-top:8px">AiSDR, Coldreach</p>
+      </div>
+      <div class="card card-warm">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:8px">Enterprise</div>
+        <div style="font-size:28px;font-weight:900">$18-60K</div>
+        <div style="font-size:13px;opacity:0.5">/year</div>
+        <p style="font-size:13px;opacity:0.5;margin-top:8px">11x, Artisan, Amplemarket, Regie.ai</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ POST-SCANDAL ═══════════════ -->
+<section class="section" id="aftermath">
+  <div class="section-label">09 &mdash; Последствия</div>
+  <h2 class="section-title">Что-то реально<br>изменилось?</h2>
+  <p class="section-subtitle">Независимый тест 2024 показал $2,500 за положительный ответ. Alice 2.0 запущена в январе 2025. Новый CEO вступил в должность в мае 2025. Вот что произошло дальше.</p>
+
+  <!-- Verdict cards -->
+  <div class="grid-2" style="margin-top:48px">
+    <div class="card" style="border-left:4px solid #1a7a3a">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#1a7a3a;margin-bottom:12px">Что 11x сделал</div>
+      <ul class="clean-list">
+        <li><strong>Alice 2.0</strong> &mdash; полная техническая перестройка за 3 месяца. Новый репозиторий, новая инфра, иерархическая мульти-агентная архитектура, 7 новых агентных возможностей</li>
+        <li><strong>Смена CEO</strong> &mdash; Prabhav Jain (ex-Brex, MIT, a16z Scout) заменил Sukkar в мае 2025</li>
+        <li><strong>Партнёрство с IBM</strong> &mdash; интеграция в watsonx Orchestrate (май 2025)</li>
+        <li><strong>Новый продукт</strong> &mdash; Mike (AI-телефонный агент) запущен наряду с Julian</li>
+        <li><strong>Метрики продакшна</strong> &mdash; ~2M лидов найдено, ~3M сообщений отправлено, ~21K ответов (2% reply rate)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:4px solid #c0392b">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;margin-bottom:12px">Чего 11x НЕ сделал</div>
+      <ul class="clean-list">
+        <li><strong>Нет новых бенчмарков</strong> &mdash; ноль обновлённых данных по стоимости ответа с момента теста 2024</li>
+        <li><strong>Нет помесячной оплаты</strong> &mdash; по-прежнему годовая привязка на $50-60K/год, пока конкуренты предлагают помесячную</li>
+        <li><strong>Нет независимого аудита</strong> &mdash; никакой сторонней верификации метрик после скандала</li>
+        <li><strong>Нет публичной ответственности</strong> &mdash; скандал решён через тихую смену CEO, без mea culpa</li>
+        <li><strong>Нет инициативы прозрачности</strong> &mdash; нет опубликованных показателей оттока, нет честных данных о retention</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Unit Economics -->
+  <div style="margin-top:48px;padding:40px;background:#F0EBE4;border-radius:16px">
+    <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px">Юнит-экономика: по-прежнему не доказано</h3>
+    <p style="font-size:15px;opacity:0.6;line-height:1.6;margin-bottom:24px;max-width:700px">Нет опубликованных доказательств, что стоимость ответа улучшилась после перестройки Alice 2.0. Бенчмарк 2024 остаётся самой свежей независимой точкой данных. У 11x был каждый стимул опубликовать лучшие цифры, если бы они существовали &mdash; молчание говорит само за себя.</p>
+
+    <div class="bar-chart">
+      <div class="bar-row">
+        <div class="bar-label" style="font-size:12px;opacity:0.5">ТЕСТ 2024</div>
+        <div class="bar-track" style="background:transparent"></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">11x.ai</div>
+        <div class="bar-track" style="background:rgba(0,0,0,0.06)"><div class="bar-fill bar-fill-red" style="width:100%">$2,500 / ответ</div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Artisan</div>
+        <div class="bar-track" style="background:rgba(0,0,0,0.06)"><div class="bar-fill bar-fill-warm" style="width:22%">$550</div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Salestools.io</div>
+        <div class="bar-track" style="background:rgba(0,0,0,0.06)"><div class="bar-fill" style="width:1%;min-width:80px">$12.50</div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="font-size:12px;opacity:0.5">2025-2026</div>
+        <div class="bar-track" style="background:transparent"></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">11x.ai</div>
+        <div class="bar-track" style="background:rgba(0,0,0,0.06)"><div class="bar-fill" style="width:100%;background:repeating-linear-gradient(45deg,#c0392b,#c0392b 10px,#a93226 10px,#a93226 20px)">Обновлённых данных нет</div></div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;opacity:0.45;margin-top:16px">Единственный продвигаемый компанией кейс: Gupshup увидел рост SQL на 50% и 1,5x рост производительности. Независимо не верифицировано.</p>
+  </div>
+
+  <!-- Customer Sentiment 2026 -->
+  <div style="margin-top:48px">
+    <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px">Настроения клиентов в 2026</h3>
+    <div class="grid-3">
+      <div class="card">
+        <div style="font-size:32px;font-weight:900;letter-spacing:-0.03em">4.2/5</div>
+        <div style="font-size:13px;opacity:0.5;margin-bottom:12px">Trustpilot (35 отзывов)</div>
+        <p style="font-size:13px">69% пятизвёздочных, 11% однозвёздочных. Глубоко поляризовано: продвинутые команды сообщают о 4-12 встречах/месяц. Пользователи «plug-and-play» получают ноль результатов.</p>
+      </div>
+      <div class="card" style="border-left:4px solid #c0392b">
+        <div class="quote" style="margin:0;padding:16px 20px;border-left:none;background:transparent">
+          <p style="font-size:14px">"Platform is continually being improved... idea and vision still much better than execution."</p>
+          <cite>Trustpilot, March 2026</cite>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.08)">
+          <p style="font-size:13px;opacity:0.6"><strong>$9,000 потрачено.</strong> 9,000 сообщений отправлено. <strong>Ноль запросов на встречи.</strong></p>
+          <p style="font-size:12px;opacity:0.4;margin-top:4px">Отзыв на Trustpilot, март 2026</p>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:12px">Ключевой паттерн</div>
+        <p style="font-size:14px;line-height:1.6">Наиболее довольные клиенты описывают 11x как <strong>инструмент дополнения</strong> (AI обрабатывает объём, люди &mdash; сложность). Это прямо <strong>противоречит</strong> основному маркетингу «автономного digital worker».</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Who Won -->
+  <div style="margin-top:48px">
+    <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px">Кто выиграл после скандала</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>11x.ai</th>
+            <th>Artisan</th>
+            <th>AiSDR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Действия после скандала</strong></td><td>Молчание + расширение в enterprise</td><td>«Лучше данные, ниже цена»</td><td>«Альтернатива с прозрачностью»</td></tr>
+          <tr><td><strong>Ценообразование</strong></td><td>$5K/мес, годовая привязка</td><td>$999-5K/мес</td><td>$900+/мес, помесячно</td></tr>
+          <tr><td><strong>Сигнал доверия</strong></td><td style="color:#c0392b">Нет (нет аудита, нет mea culpa)</td><td>Публичные бенчмарки</td><td>Публичные цены, выделенный GTM-инженер</td></tr>
+          <tr><td><strong>Тренд</strong></td><td style="color:#c0392b">Теряет долю</td><td style="color:#1a7a3a">Набирает</td><td style="color:#1a7a3a">Набирает</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bottom Line -->
+  <div style="margin-top:48px;padding:40px;background:#1a1a1a;border-radius:16px;color:#fff">
+    <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:16px">Итог</h3>
+    <p style="font-size:16px;line-height:1.7;opacity:0.7;max-width:700px">11x перестроила продукт, сменила CEO, запустила новые продукты, заключила партнёрство с IBM &mdash; но <strong style="color:#fff;opacity:1">не сделала единственное, что действительно важно</strong>: опубликовала честные, независимо верифицированные метрики производительности.</p>
+    <p style="font-size:15px;line-height:1.7;opacity:0.5;margin-top:16px;max-width:700px">Компания выбрала стратегию «двигаемся вперёд, не оглядываемся». Но рынок помнит. Конкуренты используют скандал как аргумент в продажах. Открытый вопрос: могут ли $70M кэша + поддержка a16z спасти компанию, чей product-market fit так и не доказан?</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ REVERSE ENGINEERING PLAYBOOK ═══════════════ -->
+<section class="section-warm" id="playbook">
+  <div class="section-inner">
+    <div class="section-label">10 &mdash; Плейбук</div>
+    <h2 class="section-title">Reverse Engineering:<br>что копировать</h2>
+    <p class="section-subtitle">Паттерны, которые работают, и паттерны, которые нет. Уроки, извлечённые из траектории 11x.</p>
+
+    <!-- Copy -->
+    <div class="grid-2" style="margin-top:48px">
+      <div>
+        <h3 style="font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em;color:#1a7a3a">Копировать</h3>
+
+        <div class="card" style="background:#fff;margin-bottom:16px">
+          <h3 style="font-size:16px">Фрейминг «Digital Workers»</h3>
+          <p style="font-size:13px">Человеческие имена для AI-агентов. CTA «Нанять [Имя]». Целиться в бюджеты найма, а не SaaS. Сравнивать с расходами на сотрудника, а не ПО.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px">
+          <h3 style="font-size:16px">Growth Flywheel</h3>
+          <p style="font-size:13px">Использовать свой продукт для генерации собственных лидов. Каждое взаимодействие с клиентом = живая демонстрация. Data moat через использование. НО: требуется качество продукта, иначе усиливает негативы.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px">
+          <h3 style="font-size:16px">SEO-контент сравнений</h3>
+          <p style="font-size:13px">Программатик SEO хаб с 50+ категориями. Посты «[Продукт] vs [Конкурент]». Подборки альтернатив. Образовательные mid-funnel гайды. Контрарные мнения в LinkedIn.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px">
+          <h3 style="font-size:16px">Техническая архитектура</h3>
+          <p style="font-size:13px">Иерархический мульти-агент &gt; одиночный агент. «Tools over skills.» Letta/MemGPT для stateful-памяти. Dual-LLM. Composio для интеграций. &lt;10 инструментов на агента.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px">
+          <h3 style="font-size:16px">Ключи к enterprise</h3>
+          <p style="font-size:13px">SOC 2 + GDPR с первого дня. Единая OAuth CRM-интеграция. Двусторонняя синхронизация. Это открывает enterprise-сделки.</p>
+        </div>
+
+        <div class="card" style="background:#fff">
+          <h3 style="font-size:16px">Мем/GIF-вовлечение</h3>
+          <p style="font-size:13px">35% response rate на реактивационных email с мемами и GIF. Превзошло традиционные подходы с кейсами и исследованиями.</p>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-0.02em;color:#c0392b">Избегать</h3>
+
+        <div class="card" style="background:#fff;margin-bottom:16px;border-left:4px solid #c0392b">
+          <h3 style="font-size:16px">Завышение метрик</h3>
+          <p style="font-size:13px">Схема с break clause ARR уничтожила доверие безвозвратно. Inc назвал это «AI's Theranos Moment». Никакой объём финансирования не переживёт потерю репутации.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px;border-left:4px solid #c0392b">
+          <h3 style="font-size:16px">Фейковые логотипы клиентов</h3>
+          <p style="font-size:13px">ZoomInfo направил официальную юридическую претензию: нарушение товарного знака, недобросовестная торговая практика, ложная реклама. Airtable никогда не были клиентом.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px;border-left:4px solid #c0392b">
+          <h3 style="font-size:16px">Годовая привязка без доказанной ценности</h3>
+          <p style="font-size:13px">Отток 70-80% + годовые контракты = усиленное раздражение. Пользователи чувствуют себя в ловушке, пишут разгромные отзывы, отравляют сарафанное радио.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px;border-left:4px solid #c0392b">
+          <h3 style="font-size:16px">Месседж «полный автопилот»</h3>
+          <p style="font-size:13px">Реальность: требуется значительная настройка. Разрыв между маркетинговым обещанием и опытом использования продукта &mdash; драйвер оттока #1.</p>
+        </div>
+
+        <div class="card" style="background:#fff;margin-bottom:16px;border-left:4px solid #c0392b">
+          <h3 style="font-size:16px">Игнорирование управления ответами</h3>
+          <p style="font-size:13px">Alice начинает разговоры, но не управляет ими. Командам нужны дополнительные ресурсы для обработки ответов. Критический разрыв в обещании «автономности».</p>
+        </div>
+
+        <div class="card" style="background:#fff;border-left:4px solid #c0392b">
+          <h3 style="font-size:16px">Завышенная цена без результатов</h3>
+          <p style="font-size:13px">$2,500 за положительный ответ vs $12.50 у конкурентов = разница в 200x. «40% работы SDR по 100% стоимости».</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SOURCES ═══════════════ -->
+<section class="section">
+  <div class="section-label">11 &mdash; Источники</div>
+  <h2 class="section-title">Источники<br>исследования</h2>
+
+  <div class="grid-3" style="margin-top:32px">
+    <div>
+      <h4 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:12px">Расследования</h4>
+      <ul style="list-style:none;font-size:13px;line-height:2;opacity:0.6">
+        <li>TechCrunch: Fake Customers</li>
+        <li>TechCrunch: CEO Steps Down</li>
+        <li>Sifted: Toxic Culture</li>
+        <li>Inc: AI's Theranos Moment</li>
+        <li>OnlyCFO: AI Company Fraud</li>
+      </ul>
+    </div>
+    <div>
+      <h4 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:12px">Техническое</h4>
+      <ul style="list-style:none;font-size:13px;line-height:2;opacity:0.6">
+        <li>ZenML: Multi-Agent Architecture</li>
+        <li>LlamaIndex: LlamaParse + 11x</li>
+        <li>Cartesia: Voice AI Partnership</li>
+        <li>Ultravox: Voice Case Study</li>
+        <li>Composio: Integration Case Study</li>
+        <li>LangChain: Multi-Agent Patterns</li>
+      </ul>
+    </div>
+    <div>
+      <h4 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.4;margin-bottom:12px">Рынок и отзывы</h4>
+      <ul style="list-style:none;font-size:13px;line-height:2;opacity:0.6">
+        <li>Wing VC: Growth Flywheel</li>
+        <li>Vendr: Pricing Data</li>
+        <li>MarketBetter: Review 2026</li>
+        <li>Medium: SDR Director Test</li>
+        <li>Fortune BI: AI SDR Market</li>
+        <li>G2 & Trustpilot Reviews</li>
+        <li>AiSDR: Lessons from 11x</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <p>
+    11x.ai Reverse Engineering Report &middot; Март 2026<br>
+    Исследование на основе 25+ публичных источников<br>
+    Только для внутреннего анализа
+  </p>
+</footer>
+
+</body>
+</html>
