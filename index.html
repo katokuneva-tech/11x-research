@@ -762,8 +762,11 @@
     </div>
 
     <!-- Reality Check -->
-    <div style="margin-top:48px;padding:32px;background:#fff;border-radius:16px;border-left:4px solid #c0392b">
+    <div style="margin-top:48px;padding:40px;background:#fff;border-radius:16px;border-left:4px solid #c0392b">
       <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;margin-bottom:8px">Reality Check: Independent Test Results</div>
+      <h3 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px">Cost per Positive Reply</h3>
+      <p style="font-size:15px;opacity:0.6;line-height:1.6;margin-bottom:24px;max-width:640px"><strong>Что это значит:</strong> SDR-директор 4 месяца параллельно тестировал несколько AI SDR-платформ и замерял стоимость одного <em>positive reply</em> &mdash; когда prospect реально отвечает заинтересованно, а не игнорирует или отписывается. Это ключевая метрика эффективности outbound: сколько денег нужно потратить на платформу, чтобы получить один реальный заинтересованный ответ.</p>
+
       <div class="bar-chart">
         <div class="bar-row">
           <div class="bar-label">11x.ai</div>
@@ -778,7 +781,28 @@
           <div class="bar-track"><div class="bar-fill" style="width:1%;min-width:80px">$12.50</div></div>
         </div>
       </div>
-      <p style="font-size:13px;opacity:0.5;line-height:1.5">Source: Medium, SDR Director independent 4-month head-to-head test across platforms.</p>
+
+      <!-- Расшифровка -->
+      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+        <div style="padding:20px;background:#fdf2f2;border-radius:12px">
+          <div style="font-size:13px;font-weight:700;color:#c0392b;margin-bottom:4px">11x.ai &mdash; $5,000/мес</div>
+          <p style="font-size:13px;opacity:0.7;line-height:1.5">~2 positive replies в месяц. Один пользователь заплатил <strong>$22,500 за 1 лид</strong> за 6 месяцев. Другой получил <strong>0 встреч</strong> за полгода.</p>
+        </div>
+        <div style="padding:20px;background:rgba(0,0,0,0.03);border-radius:12px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Artisan &mdash; $1,650/мес</div>
+          <p style="font-size:13px;opacity:0.7;line-height:1.5">~3 positive replies в месяц. В 4.5x дешевле 11x за reply. Быстрее setup (дни vs 4 недели).</p>
+        </div>
+        <div style="padding:20px;background:rgba(26,122,58,0.06);border-radius:12px">
+          <div style="font-size:13px;font-weight:700;color:#1a7a3a;margin-bottom:4px">Salestools.io &mdash; дешевле</div>
+          <p style="font-size:13px;opacity:0.7;line-height:1.5"><strong>В 200 раз</strong> дешевле 11x за тот же результат. Self-serve, без annual lock-in.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;padding:20px;background:rgba(0,0,0,0.03);border-radius:12px">
+        <p style="font-size:14px;line-height:1.6;opacity:0.7"><strong style="opacity:1">Почему это критично:</strong> именно этот разрыв в unit economics &mdash; главная причина 70-80% churn. Клиенты приходили с ожиданием &laquo;digital worker заменит SDR&raquo;, платили $5K/мес, через 3 месяца видели $2,500 за reply &mdash; и уходили. Flywheel начинал работать в обратную сторону: разочарованные клиенты генерировали негативный word-of-mouth. MarketBetter резюмировал: <em>&laquo;Alice replaces maybe 40% of an SDR's job at 100% of the cost.&raquo;</em></p>
+      </div>
+
+      <p style="font-size:12px;opacity:0.4;line-height:1.5;margin-top:16px">Source: Medium, SDR Director &mdash; independent 4-month head-to-head test across platforms (2024).</p>
     </div>
   </div>
 </section>
@@ -1237,58 +1261,77 @@ workflow = <span class="code-func">create_supervisor</span>(
     <h2 class="section-title" style="color:#fff">AI's Theranos<br>Moment</h2>
     <p class="section-subtitle" style="opacity:0.4">March 2025. TechCrunch investigation. ~20 sources. The story that changed the AI SDR category.</p>
 
+    <!-- Context explainer -->
+    <div style="margin-top:16px;padding:32px;background:rgba(255,255,255,0.05);border-radius:16px;margin-bottom:48px;max-width:800px">
+      <h3 style="font-size:18px;font-weight:800;color:#fff;margin-bottom:12px">Контекст: почему это важно</h3>
+      <p style="color:rgba(255,255,255,0.55);font-size:15px;line-height:1.7">11x.ai привлёк $76M от топ-фондов (a16z, Benchmark) за 14 месяцев, достигнув оценки $350M. Компания позиционировалась как лидер нового рынка AI digital workers. Но в марте 2025 журналисты TechCrunch опросили ~20 источников &mdash; инвесторов, сотрудников, бывших клиентов &mdash; и обнаружили системную фальсификацию ключевых метрик. Inc Magazine назвал это <em>&laquo;AI's Theranos Moment&raquo;</em> &mdash; сравнение с самым известным стартап-скандалом десятилетия. История стала переломной для всей категории AI SDR: инвесторы и покупатели начали относиться к заявлениям AI-стартапов с принципиально другим уровнем скепсиса.</p>
+    </div>
+
     <!-- Timeline -->
-    <div class="timeline" style="margin-top:48px;max-width:700px">
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:24px;color:#fff">Хронология событий</h3>
+    <div class="timeline" style="max-width:700px">
       <div class="timeline-item">
         <div class="timeline-date">Summer 2024</div>
         <div class="timeline-title" style="color:#fff">Internal Slack shows 20-30% retention</div>
-        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">While publicly claiming healthy growth, internal metrics paint a different picture.</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Внутренние метрики показывают, что лишь 20-30% клиентов остаются после trial-периода. Публично компания заявляет о здоровом росте и high retention. Этот разрыв между внутренней реальностью и внешним нарративом &mdash; фундамент будущего скандала.</div>
       </div>
       <div class="timeline-item">
         <div class="timeline-date">September 2024</div>
         <div class="timeline-title" style="color:#fff">Series A: $24M at $90M valuation</div>
-        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Benchmark leads. ARR figures presented to investors.</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Benchmark лидирует раунд. Инвесторам представлены ARR-цифры, рассчитанные по полной стоимости годовых контрактов &mdash; без учёта того, что большинство клиентов уходят через 3 месяца по break clause.</div>
       </div>
       <div class="timeline-item">
         <div class="timeline-date">November 2024</div>
         <div class="timeline-title" style="color:#fff">Series B: $50M at $350M valuation</div>
-        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">a16z leads. 4x valuation jump in 2 months. Investors believe 35x revenue multiple.</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">a16z лидирует. Оценка выросла в 4 раза за 2 месяца. Инвесторы считали, что платят 35x revenue multiple ($350M / $10M ARR). В реальности multiple был ~116x ($350M / $3M реального retained revenue). Разрыв между claimed и actual metrics &mdash; ядро будущего расследования.</div>
       </div>
       <div class="timeline-item red">
         <div class="timeline-date">Jan-Feb 2025</div>
         <div class="timeline-title" style="color:#fff">ZoomInfo trial fails</div>
-        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">"Performed significantly worse than our SDR employees." Logo used for 4 months without permission.</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Крупнейший data provider в B2B проводит месячный trial. Вердикт: <em>&laquo;performed significantly worse than our SDR employees.&raquo;</em> Несмотря на провал, 11x продолжает использовать логотип ZoomInfo на сайте и в sales-презентациях ещё 4 месяца. ZoomInfo отправляет formal legal threat: deceptive trade practices, trademark infringement, false advertising.</div>
       </div>
       <div class="timeline-item red">
         <div class="timeline-date">March 24, 2025</div>
         <div class="timeline-title" style="color:#fff">TechCrunch Expose</div>
-        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">~20 sources reveal inflated ARR, fake customer logos, 70-80% churn. Real revenue ~$3M vs claimed $10-25M.</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Журналисты публикуют расследование на основе ~20 источников (инвесторы, текущие и бывшие сотрудники, клиенты). Ключевые findings: inflated ARR через break clause scheme, использование логотипов ZoomInfo и Airtable без разрешения, 70-80% churn, реальная выручка ~$3M vs заявленных $10-25M. Бывший инженер: <em>&laquo;The products barely work.&raquo;</em></div>
       </div>
       <div class="timeline-item red">
         <div class="timeline-date">March 25, 2025</div>
-        <div class="timeline-title" style="color:#fff">Sifted: Toxic Culture</div>
-        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">60+ hour weeks, sleeping in office, working Christmas Day. "One day there will be a documentary about this guy."</div>
+        <div class="timeline-title" style="color:#fff">Sifted: Toxic Culture Expose</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">На следующий день европейское издание Sifted публикует расследование о токсичной культуре. 60+ часов в неделю как норма. Сотрудники спали в офисе SF. Требование работать в Christmas Day 2024. Slack-сообщение CEO (июль 2024): <em>&laquo;We need you to work nights and weekends... if you are not willing to push hard you don't deserve to be at 11x.&raquo;</em> Sales reps в среднем уходили через 2-3 месяца. Сотрудник: <em>&laquo;One day, there will be a documentary about this guy.&raquo;</em></div>
       </div>
       <div class="timeline-item red">
         <div class="timeline-date">May 5, 2025</div>
         <div class="timeline-title" style="color:#fff">CEO Steps Down</div>
-        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Hasan Sukkar &rarr; Non-Executive Chairman. Prabhav Jain (a16z Scout, ex-Brex) becomes CEO. Board-engineered succession.</div>
+        <div class="timeline-desc" style="color:rgba(255,255,255,0.45)">Через 6 недель после двух expose, Hasan Sukkar &laquo;добровольно&raquo; уходит с поста CEO в роль Non-Executive Chairman (классический soft landing для pushed-out founders). Компания: <em>&laquo;The decision was made after deep discussions with the board.&raquo;</em> Новый CEO &mdash; Prabhav Jain, a16z Scout и ex-Brex Head of Engineering, что указывает на board-engineered succession через ведущего инвестора.</div>
       </div>
     </div>
 
     <!-- Break Clause Scheme -->
     <div style="margin-top:64px;background:rgba(255,255,255,0.05);padding:40px;border-radius:16px">
-      <h3 style="font-size:24px;font-weight:800;margin-bottom:16px;color:#fff">The Break Clause Scheme</h3>
-      <div style="color:rgba(255,255,255,0.55);font-size:15px;line-height:1.8">
-        <p>1. 11x insisted on <strong style="color:#fff">one-year contracts</strong> for trials</p>
-        <p>2. Contracts contained a <strong style="color:#fff">break clause at 3 months</strong></p>
-        <p>3. When reporting ARR, counted <strong style="color:#fff">full year's value</strong> even when customers exited</p>
-        <p>4. Claimed ARR: ~$10M. Actual retained: <strong style="color:#c0392b">~$3M</strong></p>
-        <p>5. Investors thought they paid <strong style="color:#fff">35x multiple</strong>. Reality: <strong style="color:#c0392b">~116x</strong></p>
+      <h3 style="font-size:24px;font-weight:800;margin-bottom:8px;color:#fff">The Break Clause Scheme</h3>
+      <p style="color:rgba(255,255,255,0.4);font-size:14px;line-height:1.6;margin-bottom:24px;max-width:640px">Механика того, как 11x систематически завышал ARR перед инвесторами. Это не разовая ошибка &mdash; это структурная схема, встроенная в бизнес-процесс.</p>
+
+      <div style="color:rgba(255,255,255,0.55);font-size:15px;line-height:2.2">
+        <p>1. 11x настаивал на <strong style="color:#fff">годовых контрактах</strong> даже для trial-клиентов &mdash; это создавало видимость committed revenue</p>
+        <p>2. В контракт встраивалась <strong style="color:#fff">break clause на 3 месяца</strong> &mdash; клиент мог уйти без штрафов, и большинство уходило</p>
+        <p>3. При подсчёте ARR для инвесторов считали <strong style="color:#fff">полную годовую стоимость контракта</strong>, даже если клиент уже воспользовался break clause и ушёл</p>
+        <p>4. Заявленный ARR: ~$10M. Реально retained revenue: <strong style="color:#c0392b">~$3M</strong> &mdash; разрыв в 3.3 раза</p>
+        <p>5. Инвесторы Series B считали, что платят <strong style="color:#fff">35x revenue multiple</strong> ($350M/$10M). Фактический multiple: <strong style="color:#c0392b">~116x</strong> ($350M/$3M)</p>
       </div>
+
+      <div style="margin-top:24px;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px">
+        <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6"><strong style="color:rgba(255,255,255,0.7)">Почему это работало:</strong> ARR (Annual Recurring Revenue) &mdash; ключевая метрика для SaaS-инвесторов. Они используют её для расчёта valuation multiples. Если ARR $10M и multiple 35x = оценка $350M. Но если реальный revenue $3M, то инвесторы заплатили 116x &mdash; в 3+ раза больше, чем думали. Break clause превращал &laquo;годовой контракт&raquo; в де-факто 3-month trial, но на бумаге это выглядело как committed annual revenue.</p>
+      </div>
+
       <div class="quote" style="margin-top:24px">
         <p style="color:rgba(255,255,255,0.8)">"They absolutely massaged the numbers internally when it came to growth and churn."</p>
         <cite style="color:rgba(255,255,255,0.3)">Former 11x employee, TechCrunch</cite>
+      </div>
+
+      <div class="quote" style="margin-top:12px">
+        <p style="color:rgba(255,255,255,0.8)">"The products barely work."</p>
+        <cite style="color:rgba(255,255,255,0.3)">Former 11x engineer, TechCrunch</cite>
       </div>
     </div>
 
